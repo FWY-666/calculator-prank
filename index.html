@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a2e;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh;
+  user-select: none;
+}
+
+.container { width: 340px; max-width: 95vw; }
+
+/* ===== 计算器 ===== */
+.calc { display: block; }
+
+.calc .display {
+  background: #16213e;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px;
+  min-height: 100px;
+  display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: flex-end;
+  word-break: break-all;
+}
+
+.calc .expr {
+  color: #7b8ba3; font-size: 18px; min-height: 24px;
+}
+
+.calc .result {
+  color: #fff; font-size: 36px; font-weight: 300;
+  margin-top: 4px; min-height: 42px;
+}
+
+.calc .btns {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 2px; background: #0f0f23;
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+
+.calc .btns button {
+  border: none; outline: none;
+  font-size: 22px; padding: 18px 0;
+  cursor: pointer; transition: opacity .15s;
+}
+
+.calc .btns button:active { opacity: .7; }
+
+.calc .btn-fn  { background: #2d2d44; color: #e94560; }
+.calc .btn-op  { background: #2d2d44; color: #0abde3; }
+.calc .btn-num { background: #3d3d5c; color: #fff; }
+.calc .btn-eq  { background: #e94560; color: #fff; }
+
+/* ===== 会员页 ===== */
+.vip {
+  display: none; text-align: center; padding: 20px;
+}
+
+.vip .icon {
+  font-size: 64px; margin-bottom: 8px;
+}
+
+.vip h2 {
+  color: #f0c040; font-size: 22px; margin-bottom: 4px;
+}
+
+.vip .subtitle {
+  color: #999; font-size: 14px; margin-bottom: 28px;
+}
+
+.vip .cards { display: flex; flex-direction: column; gap: 14px; }
+
+.vip .card {
+  background: linear-gradient(135deg, #1e1e3a 0%, #2a1a3a 100%);
+  border: 2px solid #333;
+  border-radius: 14px; padding: 20px;
+  cursor: pointer; transition: transform .2s, border-color .2s;
+  text-align: left; position: relative; overflow: hidden;
+}
+
+.vip .card:hover { transform: translateY(-2px); }
+
+.vip .card.gold {
+  border-color: #f0c040;
+  background: linear-gradient(135deg, #1e1a0a 0%, #2a2010 100%);
+}
+
+.vip .card .badge {
+  position: absolute; top: 12px; right: 14px;
+  background: #e94560; color: #fff; font-size: 11px;
+  padding: 3px 8px; border-radius: 20px;
+}
+
+.vip .card .name { color: #fff; font-size: 18px; font-weight: 600; }
+.vip .card .desc { color: #888; font-size: 13px; margin-top: 4px; }
+
+.vip .card .price {
+  margin-top: 12px; font-size: 28px; font-weight: 700; color: #f0c040;
+}
+
+.vip .card .price em {
+  font-style: normal; font-size: 14px; font-weight: 400; color: #888;
+}
+
+.vip .back {
+  display: inline-block; margin-top: 24px;
+  color: #666; font-size: 13px; cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ===== Toast ===== */
+.toast-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 100; justify-content: center; align-items: center;
+}
+
+.toast-overlay.show { display: flex; }
+
+.toast-box {
+  background: #1e1e3a; border-radius: 16px;
+  padding: 32px 24px; text-align: center;
+  max-width: 300px; animation: popIn .3s ease;
+}
+
+@keyframes popIn {
+  from { transform: scale(.8); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.toast-box .toast-icon { font-size: 56px; margin-bottom: 8px; }
+.toast-box .toast-title { color: #f0c040; font-size: 20px; font-weight: 600; }
+.toast-box .toast-msg { color: #aaa; font-size: 14px; margin-top: 8px; }
+
+.toast-box button {
+  margin-top: 20px; padding: 10px 40px;
+  border: none; border-radius: 24px;
+  background: #f0c040; color: #1a1a2e;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: opacity .15s;
+}
+
+.toast-box button:active { opacity: .8; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== 计算器 ===== -->
+  <div class="calc" id="calcPage">
+    <div class="display">
+      <div class="expr" id="expr"></div>
+      <div class="result" id="result"></div>
+    </div>
+    <div class="btns">
+      <button class="btn-fn"  onclick="clearAll()">C</button>
+      <button class="btn-fn"  onclick="append('(')">(</button>
+      <button class="btn-fn"  onclick="append(')')">)</button>
+      <button class="btn-op"  onclick="append('/')">÷</button>
+
+      <button class="btn-num" onclick="append('7')">7</button>
+      <button class="btn-num" onclick="append('8')">8</button>
+      <button class="btn-num" onclick="append('9')">9</button>
+      <button class="btn-op"  onclick="append('*')">×</button>
+
+      <button class="btn-num" onclick="append('4')">4</button>
+      <button class="btn-num" onclick="append('5')">5</button>
+      <button class="btn-num" onclick="append('6')">6</button>
+      <button class="btn-op"  onclick="append('-')">−</button>
+
+      <button class="btn-num" onclick="append('1')">1</button>
+      <button class="btn-num" onclick="append('2')">2</button>
+      <button class="btn-num" onclick="append('3')">3</button>
+      <button class="btn-op"  onclick="append('+')">+</button>
+
+      <button class="btn-num" onclick="append('0')">0</button>
+      <button class="btn-num" onclick="append('.')">.</button>
+      <button class="btn-eq"  onclick="goVip()" style="grid-column: span 2">=</button>
+    </div>
+  </div>
+
+  <!-- ===== 会员页 ===== -->
+  <div class="vip" id="vipPage">
+    <div class="icon">👑</div>
+    <h2>计算结果需要开通会员</h2>
+    <p class="subtitle">开通后即可查看计算结果，尊享无限算力</p>
+
+    <div class="cards">
+      <div class="card" onclick="buy(298, '年')">
+        <span class="badge">热门</span>
+        <div class="name">标准会员</div>
+        <div class="desc">畅享全年计算服务</div>
+        <div class="price">298 <em>元/年</em></div>
+      </div>
+
+      <div class="card gold" onclick="buy(598, '永久')">
+        <span class="badge">推荐</span>
+        <div class="name">至尊会员</div>
+        <div class="desc">一次付费，终身计算</div>
+        <div class="price">598 <em>元/永久</em></div>
+      </div>
+    </div>
+
+    <span class="back" onclick="goBack()">← 返回计算器（试用模式）</span>
+  </div>
+
+</div>
+
+<!-- Toast 弹窗 -->
+<div class="toast-overlay" id="toast">
+  <div class="toast-box">
+    <div class="toast-icon">✅</div>
+    <div class="toast-title" id="toastTitle">充值成功</div>
+    <div class="toast-msg" id="toastMsg"></div>
+    <button onclick="closeToast()">好的</button>
+  </div>
+</div>
+
+<script>
+let currentExpr = '';
+let lastResult = '';
+
+// ---- 计算器逻辑 ----
+function updateDisplay() {
+  document.getElementById('expr').textContent = currentExpr;
+}
+
+function append(ch) {
+  currentExpr += ch;
+  updateDisplay();
+}
+
+function clearAll() {
+  currentExpr = '';
+  updateDisplay();
+}
+
+function goVip() {
+  document.getElementById('calcPage').style.display = 'none';
+  document.getElementById('vipPage').style.display = 'block';
+}
+
+function goBack() {
+  document.getElementById('vipPage').style.display = 'none';
+  document.getElementById('calcPage').style.display = 'block';
+}
+
+// ---- 会员逻辑 ----
+function buy(price, type) {
+  const msgs = [
+    '已扣费 ¥' + price + '，财务已下班，明天到账。',
+    '恭喜！你已经是尊贵的' + type + '会员了。\n（当然，计算功能还是用不了）',
+    '支付成功！计算结果将在 2099 年前推送给你。',
+    '扣款成功！请截图发给客服领取你的专属答案。'
+  ];
+  const msg = msgs[Math.floor(Math.random() * msgs.length)];
+  document.getElementById('toastTitle').textContent = '充值成功 🎉';
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toast').classList.add('show');
+}
+
+function closeToast() {
+  document.getElementById('toast').classList.remove('show');
+}
+
+// 初始化
+updateDisplay();
+</script>
+
+</body>
+</html>
