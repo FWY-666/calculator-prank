@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>父母性别计算器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a1a;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; color: #fff;
+  user-select: none;
+}
+
+.container { width: 360px; max-width: 95vw; }
+
+/* ===== 页面 1：选择页 ===== */
+.page1 { display: block; }
+
+.page1 .header { text-align: center; margin-bottom: 28px; }
+
+.page1 .header .icon { font-size: 52px; margin-bottom: 8px; }
+
+.page1 .header h2 {
+  font-size: 20px; font-weight: 600;
+  background: linear-gradient(90deg, #00d2ff, #7b2fbe);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page1 .header .sub {
+  color: #666; font-size: 13px; margin-top: 4px;
+}
+
+.page1 .select-group {
+  margin-bottom: 20px;
+}
+
+.page1 .select-group label {
+  display: block; color: #888; font-size: 13px;
+  margin-bottom: 8px; font-weight: 600; text-transform: uppercase;
+}
+
+.page1 .select-group .options {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+
+.page1 .select-group .opt {
+  background: #12122a; border: 2px solid #1e1e3a;
+  border-radius: 12px; padding: 16px 12px;
+  text-align: center; cursor: pointer;
+  transition: all .2s; color: #aaa;
+}
+
+.page1 .select-group .opt:hover { border-color: #444; }
+
+.page1 .select-group .opt.selected {
+  border-color: #7b2fbe; background: #1a1030; color: #fff;
+  box-shadow: 0 0 20px rgba(123,47,190,.2);
+}
+
+.page1 .select-group .opt .opt-icon { font-size: 28px; display: block; margin-bottom: 4px; }
+.page1 .select-group .opt .opt-label { font-size: 13px; }
+
+.page1 .btn-analyze {
+  width: 100%; padding: 16px; border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #7b2fbe, #00d2ff);
+  color: #fff; font-size: 17px; font-weight: 600;
+  cursor: pointer; transition: opacity .2s, transform .1s;
+  margin-top: 8px;
+}
+
+.page1 .btn-analyze:active { transform: scale(.97); }
+.page1 .btn-analyze:disabled { opacity: .4; cursor: not-allowed; }
+
+.page1 .tech-tags {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px; margin-top: 24px;
+}
+
+.page1 .tech-tags span {
+  background: #12122a; color: #555; font-size: 11px;
+  padding: 4px 10px; border-radius: 10px; border: 1px solid #1e1e3a;
+}
+
+/* ===== 页面 2：分析动画 ===== */
+.page2 { display: none; text-align: center; padding: 40px 20px; }
+
+.page2 .dna-spinner {
+  width: 80px; height: 80px; margin: 0 auto 32px; position: relative;
+}
+
+.page2 .dna-spinner .ring {
+  position: absolute; inset: 0;
+  border: 3px solid transparent; border-radius: 50%;
+  border-top-color: #7b2fbe; border-right-color: #00d2ff;
+  animation: spin 1s linear infinite;
+}
+
+.page2 .dna-spinner .ring:nth-child(2) {
+  inset: 12px; border-top-color: #00d2ff; border-left-color: #7b2fbe;
+  animation-duration: 1.5s; animation-direction: reverse;
+}
+
+.page2 .dna-spinner .ring:nth-child(3) {
+  inset: 24px; border-bottom-color: #7b2fbe; border-right-color: #00d2ff;
+  animation-duration: .7s;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.page2 .status-text {
+  font-size: 16px; color: #aaa; min-height: 24px;
+  transition: opacity .3s;
+}
+
+.page2 .status-text.fade { opacity: 0; }
+
+.page2 .progress-bar {
+  width: 200px; height: 3px; background: #1e1e3a;
+  border-radius: 2px; margin: 16px auto 0; overflow: hidden;
+}
+
+.page2 .progress-bar .fill {
+  height: 100%; width: 0; border-radius: 2px;
+  background: linear-gradient(90deg, #7b2fbe, #00d2ff);
+  transition: width .6s ease;
+}
+
+/* ===== 页面 3：结果页 ===== */
+.page3 { display: none; text-align: center; padding: 20px; }
+
+.page3 .result-header { margin-bottom: 28px; }
+
+.page3 .result-header .icon { font-size: 52px; margin-bottom: 8px; }
+.page3 .result-header h2 { font-size: 20px; color: #00d2ff; }
+
+.page3 .result-cards { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+
+.page3 .result-card {
+  background: #12122a; border: 2px solid #1e1e3a;
+  border-radius: 16px; padding: 20px; text-align: left;
+  position: relative; overflow: hidden;
+}
+
+.page3 .result-card.matched { border-color: #00d264; }
+
+.page3 .result-card .rc-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+
+.page3 .result-card .rc-icon { font-size: 36px; }
+
+.page3 .result-card .rc-title { font-size: 16px; font-weight: 600; color: #ccc; }
+.page3 .result-card .rc-match {
+  margin-left: auto; font-size: 28px; font-weight: 700;
+  color: #00d264; display: flex; align-items: center; gap: 4px;
+}
+
+.page3 .result-card .rc-detail {
+  font-size: 12px; color: #666; line-height: 1.6;
+  padding-left: 48px;
+}
+
+.page3 .confidence {
+  font-size: 14px; color: #888; margin-bottom: 20px;
+}
+
+.page3 .confidence span { color: #00d264; font-weight: 700; }
+
+.page3 .btn-share {
+  width: 100%; padding: 16px; border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #00d264, #00b4d2);
+  color: #fff; font-size: 16px; font-weight: 600;
+  cursor: pointer; transition: opacity .2s, transform .1s;
+}
+
+.page3 .btn-share:active { transform: scale(.97); }
+
+.page3 .retry {
+  display: inline-block; margin-top: 16px;
+  color: #555; font-size: 13px; cursor: pointer; text-decoration: underline;
+}
+
+/* Toast */
+.toast-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 100; justify-content: center; align-items: center;
+}
+
+.toast-overlay.show { display: flex; }
+
+.toast-box {
+  background: #12122a; border-radius: 16px;
+  padding: 32px 24px; text-align: center;
+  max-width: 300px; animation: popIn .3s ease;
+  border: 1px solid #2a2a4a;
+}
+
+@keyframes popIn {
+  from { transform: scale(.8); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.toast-box .toast-icon { font-size: 48px; margin-bottom: 8px; }
+.toast-box .toast-title { color: #00d264; font-size: 18px; font-weight: 600; }
+.toast-box .toast-msg { color: #888; font-size: 14px; margin-top: 8px; }
+
+.toast-box button {
+  margin-top: 20px; padding: 10px 40px;
+  border: none; border-radius: 24px;
+  background: #7b2fbe; color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== 页面 1：选择 ===== -->
+  <div class="page1" id="page1">
+    <div class="header">
+      <div class="icon">🧬</div>
+      <h2>父母性别计算器</h2>
+      <p class="sub">基于 AI 染色体大数据分析引擎</p>
+    </div>
+
+    <div class="select-group">
+      <label>👨 选择父亲</label>
+      <div class="options">
+        <div class="opt selected" data-group="father" data-val="dad" onclick="selectOpt(this)">
+          <span class="opt-icon">👨</span>
+          <span class="opt-label">爸爸</span>
+        </div>
+        <div class="opt" data-group="father" data-val="stepdad" onclick="selectOpt(this)">
+          <span class="opt-icon">🧔</span>
+          <span class="opt-label">继父</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="select-group">
+      <label>👩 选择母亲</label>
+      <div class="options">
+        <div class="opt selected" data-group="mother" data-val="mom" onclick="selectOpt(this)">
+          <span class="opt-icon">👩</span>
+          <span class="opt-label">妈妈</span>
+        </div>
+        <div class="opt" data-group="mother" data-val="stepmom" onclick="selectOpt(this)">
+          <span class="opt-icon">👩‍🦰</span>
+          <span class="opt-label">继母</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-analyze" onclick="startAnalysis()">🔬 开始基因分析</button>
+
+    <div class="tech-tags">
+      <span>DNA测序</span><span>染色体识别</span><span>深度学习</span><span>基因比对</span>
+      <span>量子计算</span><span>神经网络</span>
+    </div>
+  </div>
+
+  <!-- ===== 页面 2：分析动画 ===== -->
+  <div class="page2" id="page2">
+    <div class="dna-spinner">
+      <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    </div>
+    <div class="status-text" id="statusText">正在读取DNA数据库...</div>
+    <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- ===== 页面 3：结果 ===== -->
+  <div class="page3" id="page3">
+    <div class="result-header">
+      <div class="icon">📊</div>
+      <h2>性别分析结果</h2>
+    </div>
+
+    <div class="result-cards">
+      <div class="result-card matched" id="fatherCard">
+        <div class="rc-header">
+          <span class="rc-icon">👨</span>
+          <span class="rc-title" id="fatherLabel">父亲</span>
+          <span class="rc-match" id="fatherResult">♀️ ✓</span>
+        </div>
+        <div class="rc-detail" id="fatherDetail"></div>
+      </div>
+
+      <div class="result-card matched" id="motherCard">
+        <div class="rc-header">
+          <span class="rc-icon">👩</span>
+          <span class="rc-title" id="motherLabel">母亲</span>
+          <span class="rc-match" id="motherResult">♂️ ✓</span>
+        </div>
+        <div class="rc-detail" id="motherDetail"></div>
+      </div>
+    </div>
+
+    <div class="confidence">置信度：<span>99.99997%</span></div>
+
+    <button class="btn-share" onclick="shareResult()">📤 分享给父母确认</button>
+    <br><span class="retry" onclick="retry()">← 重新分析</span>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast-overlay" id="toast">
+  <div class="toast-box">
+    <div class="toast-icon">😂</div>
+    <div class="toast-title">已复制</div>
+    <div class="toast-msg">快去震惊你的父母吧！</div>
+    <button onclick="closeToast()">好的</button>
+  </div>
+</div>
+
+<script>
+let fatherVal = 'dad';
+let motherVal = 'mom';
+
+function selectOpt(el) {
+  const group = el.dataset.group;
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  if (group === 'father') fatherVal = el.dataset.val;
+  if (group === 'mother') motherVal = el.dataset.val;
+}
+
+function startAnalysis() {
+  document.getElementById('page1').style.display = 'none';
+  document.getElementById('page2').style.display = 'block';
+
+  const status = document.getElementById('statusText');
+  const fill = document.getElementById('progressFill');
+
+  const steps = [
+    { text: '正在读取DNA数据库...', delay: 0, prog: 25 },
+    { text: '染色体 X/Y 比对中...', delay: 700, prog: 50 },
+    { text: '调用 GPT-25 超级算力...', delay: 1400, prog: 75 },
+    { text: '交叉验证基因序列...', delay: 2100, prog: 92 },
+    { text: '✅ 分析完成！', delay: 2700, prog: 100 },
+  ];
+
+  steps.forEach(s => {
+    setTimeout(() => {
+      status.classList.add('fade');
+      setTimeout(() => {
+        status.textContent = s.text;
+        status.classList.remove('fade');
+        fill.style.width = s.prog + '%';
+      }, 200);
+    }, s.delay);
+  });
+
+  setTimeout(showResult, 3200);
+}
+
+function showResult() {
+  document.getElementById('page2').style.display = 'none';
+  document.getElementById('page3').style.display = 'block';
+
+  // 随机胡扯术语
+  const fatherReasons = [
+    '经 Y染色体 SRY 基因反向交叉比对，该个体表现为隐性雌性表达，X染色体活性异常升高 38.7%，存在大量雌性激素受体编码序列。',
+    '核型分析显示 46,XY 但 SOX9 基因启动子区域甲基化水平异常，导致睾丸发育通路被抑制，卵巢决定因子 FOXL2 异常激活。',
+    '三代测序发现该个体 Yp11.3 区域存在 12.7kb 缺失，导致雄性决定区退化，WNT4/RSPO1 雌性通路被意外激活。',
+    '全基因组关联分析(GWAS)表明该个体携带罕见的 DAX1 基因重复突变，剂量效应导致雄性通路抑制，雌性表型占主导。',
+  ];
+
+  const motherReasons = [
+    '核型分析显示 46,XX 但 SOX9 基因异常表达，FOXL2 基因发生无义突变，卵巢发育被部分抑制，睾丸决定通路意外开启。',
+    '检测到 SRY 基因异位表达于 Xq28 区域，该染色体易位事件导致雌性个体中触发了雄性分化程序，AR 受体高度活跃。',
+    '全外显子测序发现 WNT4 基因纯合缺失，导致缪勒氏管发育异常，同时 NR5A1 基因过表达触发雄性通路。',
+    '单细胞测序表明该个体性腺体细胞中 DMRT1 基因意外激活，拮抗了 FOXL2 的雌性维持功能，性腺向睾丸方向偏转。',
+  ];
+
+  const fatherLabel = fatherVal === 'dad' ? '父亲' : '继父';
+  const motherLabel = motherVal === 'mom' ? '母亲' : '继母';
+
+  document.getElementById('fatherLabel').textContent = fatherLabel;
+  document.getElementById('fatherDetail').textContent = fatherReasons[Math.floor(Math.random() * fatherReasons.length)];
+  document.getElementById('motherLabel').textContent = motherLabel;
+  document.getElementById('motherDetail').textContent = motherReasons[Math.floor(Math.random() * motherReasons.length)];
+}
+
+function shareResult() {
+  document.getElementById('toast').classList.add('show');
+}
+
+function closeToast() {
+  document.getElementById('toast').classList.remove('show');
+}
+
+function retry() {
+  document.getElementById('page3').style.display = 'none';
+  document.getElementById('page1').style.display = 'block';
+  document.getElementById('progressFill').style.width = '0';
+}
+</script>
+
+</body>
+</html>
